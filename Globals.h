@@ -2,6 +2,7 @@
 #define DEBUG_frame
 #define USE_OTA
 //#define FREERUN
+#define USE_SETTINGS_PW
 
 #define pred_size 10
 #define PIXELS 12
