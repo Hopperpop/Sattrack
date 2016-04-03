@@ -207,13 +207,14 @@ void senddata(){
 
 void sendconfig(){
 
+#ifdef USE_SETTINGS_PW
     if ( WiFi.getMode() != WIFI_AP){
       if ( !server.authenticate(host,ap_password)){
         server.requestAuthentication();
         return;
       }
     }
-
+#endif
     Stringbuffer buf(43 + 75 + 15*12 + 16*4 + 19*6 + 138 + 13 + 16*3 +  20);
     
     buf.add("input|SSID|");buf.add(config->ssid);
@@ -284,13 +285,15 @@ void initServer(){
     server.on("/data", senddata);
     
     server.on("/settings.html", [](){
-      
+
+#ifdef USE_SETTINGS_PW
         if ( WiFi.getMode() != WIFI_AP){
           if ( !server.authenticate(host,ap_password)){
             server.requestAuthentication();
             return;
           }
         }
+#endif
         saveNetworkSettings();
         sendbestand("/settings.html","text/html");
         
