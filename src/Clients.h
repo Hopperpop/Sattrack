@@ -77,13 +77,38 @@ bool getTle(int ide){
   return getTle(ide, false);
 }
 
+bool MatchTlePattern(const char* line,const char* pattern){
+    int i = 0;
+    bool match = true;
+    while (pattern[i] != 0 && line[i] != 0 && match){
+      switch(pattern[i]){
+          case 'N':
+            match = line[i] >= '0' && line[i] <= '9' || line[i]  == ' ';
+            break;
+          case 'A':
+            match = line[i] >= 'A' && line[i] <= 'Z' || line[i]  == ' ';
+            break;
+          case 'C':
+            match = line[i] >= 'A' && line[i] <= 'Z';
+            break;
+          case '+':
+            match = line[i] == '+' || line[i] == '-' || line[i]  == ' ';
+            break;
+          default:
+            match = line[i] == pattern[i];
+            break;
+      }
+      i++;
+    }
+    return match && pattern[i] == 0;
+}
 
 bool getTle(int ide, bool forceupdate){
-  
+
   if (WiFi.status() == WL_CONNECTED){
 
     client.flush();
-    
+
     const int httpPort = 80;
     if (!client.connect("celestrak.com", httpPort)) {
       #ifdef DEBUG
@@ -107,44 +132,45 @@ bool getTle(int ide, bool forceupdate){
       #endif
       return false;
     }
-    
+
     // Read all the lines of the reply from server and print them to Serial
     //read header
     bool succes = false;
-    line = client.readStringUntil('\n');
-    //Serial.println(line);
-    while (client.available() && succes == false){
-      line = client.readStringUntil('\n');
-      line.trim();
-      //Serial.println(line);
-      if ( line == "<PRE>" || line == "<pre>" ){
-         succes = true;
-      }
-    }
-    if (!succes){return false;}
-    
     char* longstr1 = new char[80];
     char* longstr2 = new char[80];
     char* naam = new char[25];
 
-    line = client.readStringUntil('\n');
-    line.trim();
-    strlcpy (naam, line.c_str(),25);
-    line = client.readStringUntil('\n');
-    line.trim();
-    strlcpy (longstr1, line.c_str(),80);
-    line = client.readStringUntil('\n');
-    line.trim();
-    strlcpy (longstr2, line.c_str(),80);
-    
-    client.stop();
-
-    if (longstr1[0] == '1' && longstr2[0] == '2'){
+    //Read lines until it match the first tle line pattern
+    while (client.available() && succes == false){
+      line = client.readStringUntil('\n');
+      line.trim();
       #ifdef DEBUG
-        Serial.println("Succes");
+        Serial.println(line);
       #endif
+      if (!succes){
+        if (MatchTlePattern(line.c_str(),"1 NNNNNC NNNNNAAA NNNNN.NNNNNNNN +.NNNNNNNN +NNNNN+N +NNNNN+N N NNNNN")){
+          succes = true;
+          strlcpy (longstr1, line.c_str(),80);
+        } else {
+          strlcpy (naam, line.c_str(),25);    //Store line into name until succes match
+        }
+      }
     }
-    else {
+    //Read second line of tle
+    if (client.available() && succes){
+      line = client.readStringUntil('\n');
+      line.trim();
+      #ifdef DEBUG
+        Serial.println(line);
+      #endif
+      if (MatchTlePattern(line.c_str(),"2 NNNNN NNN.NNNN NNN.NNNN NNNNNNN NNN.NNNN NNN.NNNN NN.NNNNNNNNNNNNNN")){
+        succes = true;
+        strlcpy (longstr2, line.c_str(),80);
+      }
+    }
+
+    //Stop and cleanup if not succesfull
+    if (!succes){
       #ifdef DEBUG
         Serial.println("\r\nnot a correct api-response");
       #endif
@@ -153,7 +179,11 @@ bool getTle(int ide, bool forceupdate){
       delete[] longstr2;
       return false;
     }
+
+    client.stop();
+
     #ifdef DEBUG
+      Serial.println("------Tle matched-----");
       Serial.println(naam);
       Serial.println(longstr1);
       Serial.println(longstr2);
