@@ -13,14 +13,14 @@ class Animo {
     Ticker tick;
     RgbColor fcolor;
     RgbColor bcolor;
-    NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod>* bus;
+    NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod>* bus;
     anim_mode status;
     unsigned int frame;
 
   public:
 
-    void Begin(NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod>* s){bus = s;status = ANIM_STOP;};
-  
+    void Begin(NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod>* s){bus = s;status = ANIM_STOP;};
+
     void Animation();
 
     void SetAnimColor(uint8_t rf,uint8_t gf,uint8_t bf,uint8_t rb,uint8_t gb,uint8_t bb);
@@ -30,7 +30,7 @@ class Animo {
     void AnimStart(anim_mode m);
 
     bool CanShow();
-    
+
 } LedStrip;
 
 void animation(){   //dirty hack for ticker
@@ -55,7 +55,7 @@ void Animo::AnimStop(){
 }
 
 void Animo::AnimStart(anim_mode m){
-    
+
     switch (m){
         case ANIM_STOP:
           AnimStop();
@@ -73,7 +73,7 @@ void Animo::AnimStart(anim_mode m){
         case ANIM_FLASH:
           frame = 0;
           if(status!=ANIM_FLASH){tick.detach();tick.attach_ms(500,animation);}
- 
+
     }
     status = m;
 }
@@ -81,16 +81,16 @@ void Animo::AnimStart(anim_mode m){
 void Animo::Animation(){
 
     switch (status){
-      
+
         case ANIM_STOP:
           break;
 
         case ANIM_WAIT:
-          
+
           if(bus->CanShow()){
-            
+
               bus->ClearTo(bcolor);
-              
+
               #ifdef IGNOREFIRSTPIXEL
                 bus->SetPixelColor(0, RgbColor(0,0,0));
                 bus->SetPixelColor(frame+1, fcolor);
@@ -105,10 +105,10 @@ void Animo::Animation(){
                   bus->SetPixelColor(frame, fcolor);
                 #endif
               #endif
-              
+
               bus->Show();
           }
-      
+
           break;
 
         case ANIM_FLASH:
@@ -121,7 +121,7 @@ void Animo::Animation(){
           }
           if(bus->CanShow()){bus->Show();}
           break;
-   }  
+   }
 }
 
 bool Animo::CanShow(){
@@ -133,4 +133,3 @@ bool Animo::CanShow(){
 }
 
 #endif
-

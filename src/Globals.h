@@ -15,7 +15,7 @@
   #define buttonPin 0           //Pinnumber for factoryreset button, default GPIO0. Button to ground + 10k pull up resistor
 #endif
 
-NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod> strip(PIXELS, 2);   //Connect the neopixels to GPIO2, change NeoGrbFeature if needed
+NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(PIXELS, 2);   //Connect the neopixels to GPIO2, change NeoGrbFeature if needed
 AsyncWebServer server(80);
 WebSocketsServer webSocket(81);
 Sgp4 sat;
